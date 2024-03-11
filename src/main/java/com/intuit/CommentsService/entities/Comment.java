@@ -2,8 +2,7 @@ package com.intuit.CommentsService.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -12,8 +11,8 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "posts")
-public class Post {
+@Table(name = "comments")
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,16 +20,16 @@ public class Post {
 
     private String content;
 
-    private Timestamp postCreatedTime;
+    private Timestamp commentCreatedTime;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties("user")
+    @JsonIgnoreProperties("comments")
     private User user;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("post")
-    private List<Comment> comments = new ArrayList<>();
-
+    @ManyToOne
+    @JoinColumn(name = "post_id")
+    @JsonIgnoreProperties("comments")
+    private Post post;
 
 }
