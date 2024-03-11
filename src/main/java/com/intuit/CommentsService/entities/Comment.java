@@ -1,50 +1,58 @@
 package com.intuit.CommentsService.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "COMMENTS")
+@Table(name = "comment")
 public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "COMMENT_ID")
+    @Column(name = "comment_id")
     private Long commentId;
 
-    @Column(name = "TEXT")
-    private String text;
+    @Column(name = "content")
+    private String content;
 
-    @Column(name = "COMMENT_CREATED_DATE")
-    private Timestamp comment_created_date;
-
-    @Column(name = "PARENT_COMMENT_ID")
-    private Long parentCommentId;
+    @Column(name = "comment_created_date")
+    private Timestamp commentCreatedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "POST_ID")
-    private Post post;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID")
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "PARENT_COMMENT_ID", insertable = false, updatable = false)
+    @JoinColumn(name = "post_id")
+    private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Comment> replies; // Nested comments
+    private List<Comment> nestedComments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<LikeDislike> likes;
+    public Comment(String content, User user, Post post, Comment parentComment) {
+        this.content = content;
+        this.user = user;
+        this.post = post;
+        this.parentComment = parentComment;
+        this.commentCreatedDate = new Timestamp(System.currentTimeMillis());
+    }
+
+    public void addNestedComment(Comment nestedComment) {
+        this.nestedComments.add(nestedComment);
+        nestedComment.setParentComment(this);
+    }
 
 }

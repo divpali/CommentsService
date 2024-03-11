@@ -1,9 +1,11 @@
 package com.intuit.CommentsService.controller;
 
-import com.intuit.CommentsService.PostResponse;
-import com.intuit.CommentsService.dto.CommentDto;
-import com.intuit.CommentsService.dto.PostDto;
-import com.intuit.CommentsService.dto.UserDto;
+import com.intuit.CommentsService.CommentRequest;
+import com.intuit.CommentsService.CommentResponse;
+import com.intuit.CommentsService.PostRequest;
+import com.intuit.CommentsService.dto.CommentDTO;
+import com.intuit.CommentsService.dto.PostDTO;
+import com.intuit.CommentsService.dto.UserDTO;
 import com.intuit.CommentsService.entities.Comment;
 import com.intuit.CommentsService.entities.Post;
 import com.intuit.CommentsService.entities.User;
@@ -12,13 +14,10 @@ import com.intuit.CommentsService.service.PostService;
 import com.intuit.CommentsService.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/comments-service")
@@ -33,71 +32,65 @@ public class CommentsServiceController {
      */
 
     @Autowired
+    UserService userService;
+
+    @Autowired
     PostService postService;
 
     @Autowired
     CommentService commentService;
 
-    @Autowired
-    UserService userService;
-    
-    ModelMapper modelMapper;
+    private ModelMapper modelMapper;
 
-    @ModelAttribute
-    public void userInit() {    //getting user info from 0Auth Setup
-        modelMapper = new ModelMapper();
-    }
-
-    @GetMapping("/ping")
-    public ResponseEntity<?> healthStatus() {
-        return ResponseEntity.ok().body("ping!");
+    public CommentsServiceController() {
+        this.modelMapper = new ModelMapper();
     }
 
     @PostMapping("/user")
     public ResponseEntity<?> createUser(@RequestParam String userName) {
+        UserDTO user = userService.createUser(userName);
+        return ResponseEntity.ok(user);
+    }
 
-        userService.save(userName);
-        return ResponseEntity.ok("User created");
-
+    @GetMapping("/user/{user_id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long user_id) {
+        User user = userService.getUserById(user_id);
+        return ResponseEntity.ok(modelMapper.map(user, UserDTO.class));
     }
 
     @PostMapping("/post")
-    public ResponseEntity<PostResponse> createPostByUser(@RequestParam Long userId, @RequestBody String postContent) {
-        try {
-            PostDto createdPost = postService.createPost(userId, postContent);
-            PostResponse responseDto = PostResponse.fromEntity(createdPost);
-            return ResponseEntity.ok(responseDto);
-//            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<?> createPost(@RequestBody PostRequest postRequest) {
+        Post post = postService.createPost(postRequest);
+        return ResponseEntity.ok(modelMapper.map(post, PostDTO.class));
     }
 
-    @PostMapping("/post/{post_id}/comment")
-    public ResponseEntity<PostResponse> addCommentToPost(@PathVariable("post_id") long post_id, @RequestBody String content, @RequestParam Long userId) {
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<?> getPostById(@PathVariable Long postId) {
+        PostDTO post= postService.getPostById(postId);
+        return ResponseEntity.ok(post);
+    }
 
-        User user = userService.getUserById(userId);
+    @PostMapping("/comment/{postId}")
+    public ResponseEntity<?> addCommentToPost(@PathVariable Long postId, @RequestBody CommentRequest commentRequest) {
 
-        UserDto userDto = modelMapper.map(user, UserDto.class);
-        PostDto postDto = postService.getPostById(post_id);
-
-        //create CommentDto
-        CommentDto commentDto = new CommentDto();
-        commentDto.setText(content);
-        commentDto.setComment_created_date(System.currentTimeMillis());
-        commentDto.setUserDto(userDto);
-        commentDto.setPostDto(postDto);
-
-        if (postDto.getCommentDtoList() == null) {
-            new ArrayList<>().add(commentDto);
-        } else {
-            postDto.getCommentDtoList().add(commentDto);
+        User user = userService.getUserById(commentRequest.getUserId());
+        if(user == null) {
+            user = userService.createUser1(commentRequest.getUserName());
         }
 
-        PostResponse postResponse = PostResponse.fromEntity(postDto);
+        Comment comment = commentService.createCommentForPost(user, commentRequest);
 
-        return ResponseEntity.ok(postResponse);
 
+        Post post = postService.addCommentToPost(postId, comment);
+
+        return ResponseEntity.ok(modelMapper.map(post, PostDTO.class));
+    }
+
+    @GetMapping("/comment/{comment_id}")
+    public ResponseEntity<?> getCommentById(@PathVariable Long comment_id) {
+        Comment comment = commentService.getCommentById(comment_id);
+
+        return ResponseEntity.ok(modelMapper.map(comment, CommentDTO.class));
     }
 }
 

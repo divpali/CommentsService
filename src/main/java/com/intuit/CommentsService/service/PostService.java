@@ -1,19 +1,24 @@
 package com.intuit.CommentsService.service;
 
-import com.intuit.CommentsService.dto.PostDto;
+import com.intuit.CommentsService.CommentRequest;
+import com.intuit.CommentsService.PostRequest;
+import com.intuit.CommentsService.dto.PostDTO;
+import com.intuit.CommentsService.entities.Comment;
 import com.intuit.CommentsService.entities.Post;
+import com.intuit.CommentsService.entities.User;
 
 import java.util.List;
 
 public interface PostService {
 
-    public PostDto createPost (long userId, String postContent);
+    Post createPost(PostRequest postRequest);
 
-    public List<Post> getPostsByUserId(long userId);
+    PostDTO getPostById(Long postId);
 
-    // Assuming you have a method to retrieve the post by postId
-    public PostDto getPostById(long postId);
+    Post getPostById1(Long postId);
 
-    public List<Post> getAllPosts();
+    Post savePostWithNewComments(Post post);
+
+    Post addCommentToPost(Long postId, Comment comment);
 
 }

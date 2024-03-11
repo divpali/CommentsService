@@ -11,12 +11,9 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostDto {
+public class UserDTO {
 
-    private long postId;
-    private UserDto userDto;
-    private String content;
-    private long post_created_date;
-    private List<CommentDto> commentDtoList;
+    private Long userId;
+    private String username;
 
 }

@@ -1,7 +1,6 @@
 package com.intuit.CommentsService.service;
 
-import com.intuit.CommentsService.dto.UserDto;
-import com.intuit.CommentsService.entities.Comment;
+import com.intuit.CommentsService.dto.UserDTO;
 import com.intuit.CommentsService.entities.User;
 import com.intuit.CommentsService.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -9,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,19 +22,26 @@ public class UserServiceImpl implements UserService {
         modelMapper = new ModelMapper();
     }
 
+
     @Override
-    public User getUserById(long userId) {
-        return userRepository.findById(userId).get();
+    public UserDTO createUser(String username) {
+        User user = userRepository.save(User.builder().username(username).build());
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @Override
-    public User save(String userName) {
-        User user = User.builder().username(userName).build();
-        return userRepository.save(user);
+    public User createUser1(String username) {
+        return userRepository.save(User.builder().username(username).build());
     }
 
     @Override
-    public List<User> getAllUser() {
-        return userRepository.findAll();
+    public User getUserById(Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isPresent()) {
+            return userOptional.get();
+        } else {
+            return null; // or return a default User object, or -1 as per your requirement
+        }
     }
 }

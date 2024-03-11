@@ -1,37 +1,42 @@
 package com.intuit.CommentsService.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "POST")
+@Table(name = "posts")
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "POST_ID")
+    @Column(name = "post_id")
     private Long postId;
 
-    @Column(name = "CONTENT")
+    @Column(name = "content")
     private String content;
 
-    @Column(name = "POST_CREATED_DATE")
+    @Column(name = "post_created_date")
     private Timestamp postCreatedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private List<Comment> commentList;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Comment> commentList = new ArrayList<>();
+
+    public void addComments(Comment comment) {
+        this.commentList.add(comment);
+        comment.setPost(this);
+    }
+
 }

@@ -1,15 +1,15 @@
 package com.intuit.CommentsService.service;
 
+import com.intuit.CommentsService.dto.UserDTO;
 import com.intuit.CommentsService.entities.User;
 
 import java.util.List;
 
 public interface UserService {
 
-    public User getUserById(long id);
+    UserDTO createUser(String username);
 
-    public User save(String userName);
+    User createUser1(String username);
 
-    public List<User> getAllUser();
-
+    User getUserById(Long userId);
 }
