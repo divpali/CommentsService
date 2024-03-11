@@ -5,6 +5,7 @@ import com.intuit.CommentsService.entities.User;
 import lombok.Data;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 public class CommentResponse {
@@ -24,5 +25,6 @@ public class CommentResponse {
         User user = comment.getUser();
         this.userId = user.getId();
         this.username = user.getUsername();
+
     }
 }
