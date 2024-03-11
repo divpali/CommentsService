@@ -32,4 +32,12 @@ public class Comment {
     @JsonIgnoreProperties("comments")
     private Post post;
 
+    @ManyToOne
+    @JoinColumn(name = "parent_comment_id")
+    @JsonIgnoreProperties("replies")
+    private Comment parentComment;
+
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> replies = new ArrayList<>();
+
 }

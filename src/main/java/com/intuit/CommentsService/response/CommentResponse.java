@@ -16,6 +16,7 @@ public class CommentResponse {
 
     private Long userId;
     private String username;
+    private List<CommentResponse> replies; // Updated to handle replies
 
     public CommentResponse(Comment comment) {
         this.commentId = comment.getId();
@@ -26,5 +27,8 @@ public class CommentResponse {
         this.userId = user.getId();
         this.username = user.getUsername();
 
+        this.replies = comment.getReplies().stream()
+                .map(CommentResponse::new)
+                .collect(Collectors.toList());
     }
 }

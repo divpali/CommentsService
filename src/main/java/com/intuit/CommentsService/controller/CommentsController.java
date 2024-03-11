@@ -89,5 +89,68 @@ public class CommentsController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/add-reply/{postId}")
+    public ResponseEntity<?> addReplyToComment(
+            @PathVariable Long postId,
+            @RequestBody CommentRequest commentRequest) {
+
+        Optional<Post> postOptional = postRepository.findById(postId);
+
+        if (postOptional.isPresent()) {
+            Post post = postOptional.get();
+
+            User user;
+
+            if (commentRequest.getId() != null) {
+                Optional<User> userOptional = userRepository.findById(commentRequest.getId());
+
+                if (userOptional.isPresent()) {
+                    user = userOptional.get();
+                } else {
+                    // Create a new user if userOptional is not present
+                    user = new User();
+                    user.setUsername(commentRequest.getUserName());
+                    userRepository.save(user);
+                }
+            } else {
+                // If userId is not provided in the request, handle it as needed
+                // For example, throw an exception or return an error response
+                return ResponseEntity.badRequest().body("UserId is required for comments.");
+            }
+
+            Comment parentComment;
+
+            if (commentRequest.getParentCommentId() != null) {
+                Optional<Comment> parentCommentOptional = commentRepository.findById(commentRequest.getParentCommentId());
+                parentComment = parentCommentOptional.orElse(null);
+            } else {
+                parentComment = null; // No parent comment, direct reply to the post
+            }
+
+            Comment reply = new Comment();
+            reply.setContent(commentRequest.getContent());
+            reply.setCommentCreatedTime(new Timestamp(System.currentTimeMillis()));
+            reply.setUser(user);
+            reply.setPost(post);
+            reply.setParentComment(parentComment);
+
+            if (parentComment != null) {
+                parentComment.getReplies().add(reply);
+            } else {
+                post.getComments().add(reply);
+            }
+
+            postRepository.save(post);
+            userRepository.save(user);
+            commentRepository.save(reply);
+
+            // Create and return the updated PostResponse object
+            PostResponse postResponse = new PostResponse(post);
+            return ResponseEntity.ok(postResponse);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
 
