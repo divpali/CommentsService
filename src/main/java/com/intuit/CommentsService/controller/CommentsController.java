@@ -57,6 +57,14 @@ public class CommentsController {
         return new PostResponse(post);
     }
 
+    @GetMapping("/post/{postId}")
+    public PostResponse getPostById(@PathVariable Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + postId));
+
+        return new PostResponse(post);
+    }
+
     @PostMapping("/add/{postId}")
     public ResponseEntity<PostResponse> addCommentToPost(
             @PathVariable Long postId,
@@ -187,6 +195,45 @@ public class CommentsController {
 
     }*/
 
+    @PostMapping("/add-replyComment/{parentCommentId}")
+    public ResponseEntity<?> addReplyToComment1(
+            @PathVariable Long parentCommentId,
+            @RequestBody CommentRequest commentRequest) {
+
+        Optional<Comment> parentCommentOptional = commentRepository.findById(parentCommentId);
+
+        if (!parentCommentOptional.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Comment parentComment = parentCommentOptional.get();
+
+        //check if the user exists
+        User user = null;
+        Optional<User> userOptional = userRepository.findById(commentRequest.getUserId());
+        if (!userOptional.isPresent()) {
+            user = new User();
+            user.setId(commentRequest.getUserId());
+            user.setUsername(commentRequest.getUserName());
+            userRepository.save(user);
+        }
+
+        //create the reply
+        Comment reply = new Comment();
+        reply.setContent(commentRequest.getCommentContent());
+        reply.setCommentCreatedTime(new Timestamp(System.currentTimeMillis()));
+        reply.setUser(user);
+        reply.setParentComment(parentComment);
+
+        commentRepository.save(reply);
+
+        //add reply to parent comment & save the updated parent comment
+        parentComment.getReplies().add(reply);
+        commentRepository.saveAndFlush(parentComment);
+
+        return ResponseEntity.ok(new CommentResponse(parentComment));
+    }
+
     @PostMapping("/add-reply/{postId}")
     public ResponseEntity<?> addReplyToComment(
             @PathVariable Long postId,
@@ -239,8 +286,8 @@ public class CommentsController {
 
     }
 
-        //here we dont persist user info on user liking or disliking a post
-    //we job keep count of like or dislike of post or comment
+    //here we dont persist user info on user liking or disliking a post
+    //we keep count of like or dislike of post or comment
 
     @PostMapping("/like-post/{postId}")
     public ResponseEntity<?> likeOrDislikePost(@PathVariable Long postId, @RequestParam String likeDislikeType) {
@@ -250,63 +297,30 @@ public class CommentsController {
         if (postOptional.isPresent()) {
             Post post = postOptional.get();
 
-            // Find existing like/dislike or create a new one
-            LikeDislike existingLikeDislike = likeDislikeRepository.findByPost(post);
-
-            if (existingLikeDislike != null) {
-                // Update existing like/dislike
-                LikeDislike likeDislike = existingLikeDislike;
-                updateLikeDislikeCounts(likeDislike, likeDislikeType);
-
-                likeDislikeRepository.save(likeDislike);
+            // Increment or decrement like count based on likeDislikeType
+            if ("like".equalsIgnoreCase(likeDislikeType)) {
+                Long currentLikeCount = post.getLikeCount();
+                post.setLikeCount(currentLikeCount != null ? currentLikeCount + 1 : 1);
+            } else if ("dislike".equalsIgnoreCase(likeDislikeType)) {
+                Long currentDislikeCount = post.getLikeCount();
+                post.setDislikeCount(currentDislikeCount != null ? currentDislikeCount + 1 : 1);
             } else {
-                // Create a new like/dislike
-                LikeDislike newLikeDislike = new LikeDislike();
-                newLikeDislike.setPost(post);
-                updateLikeDislikeCounts(newLikeDislike, likeDislikeType);
-
-                likeDislikeRepository.save(newLikeDislike);
+                // Invalid likeDislikeType
+                return ResponseEntity.badRequest().build();
             }
 
-            // Update like/dislike count in the associated post
-            updatePostLikeDislikeCounts(post, likeDislikeType);
+            postRepository.save(post);
 
             PostResponse postResponse = new PostResponse(post);
             return ResponseEntity.ok(postResponse);
-//            return ResponseEntity.ok("Post liked or disliked successfully!");
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
 
-    private void updateLikeDislikeCounts(LikeDislike likeDislike, String likeDislikeType) {
-        if (likeDislikeType.equalsIgnoreCase("LIKE")) {
-            Long likeCount = likeDislike.getPost().getLikeCount();
-            if(likeCount == null) {
-                likeDislike.getPost().setLikeCount(Long.valueOf(1));
-            } else {
-                likeDislike.getPost().setLikeCount(likeCount++);
-            }
-        } else if (likeDislikeType.equalsIgnoreCase("DISLIKE")) {
-            Long disLikeCount = likeDislike.getPost().getDislikeCount() != null ? likeDislike.getPost().getDislikeCount() : 1;
-            if(disLikeCount == null) {
-                likeDislike.getPost().setLikeCount(Long.valueOf(1));
-            } else {
-                likeDislike.getPost().setLikeCount(disLikeCount++);
-            }
-        }
-    }
-
-    private void updatePostLikeDislikeCounts(Post post, String likeDislikeType) {
-        if (likeDislikeType.equalsIgnoreCase("LIKE")) {
-            post.setLikeCount(post.getLikeCount() + 1);
-        } else if (likeDislikeType.equalsIgnoreCase("DISLIKE")) {
-            post.setDislikeCount(post.getDislikeCount() + 1);
-        }
     }
 
     @PostMapping("/like-comment/{commentId}")
-    public ResponseEntity<String> likeOrDislikeComment(
+    public ResponseEntity<CommentResponse> likeOrDislikeComment(
             @PathVariable Long commentId,
             @RequestParam String likeDislikeType) {
 
@@ -316,49 +330,27 @@ public class CommentsController {
         if (commentOptional.isPresent()) {
             Comment comment = commentOptional.get();
 
-            // Find existing like/dislike or create a new one
-            LikeDislike existingLikeDislike = likeDislikeRepository.findByComment(comment);
-
-            if (existingLikeDislike != null) {
-                // Update existing like/dislike
-                LikeDislike likeDislike = existingLikeDislike;
-                updateLikeDislikeCounts(likeDislike, likeDislikeType);
-
-                likeDislikeRepository.save(likeDislike);
+            // Increment or decrement like count based on likeDislikeType
+            if ("like".equalsIgnoreCase(likeDislikeType)) {
+                Long currentLikeCount = comment.getLikeCount();
+                comment.setLikeCount(currentLikeCount != null ? currentLikeCount + 1 : 1);
+            } else if ("dislike".equalsIgnoreCase(likeDislikeType)) {
+                Long currentDislikeCount = comment.getLikeCount();
+                comment.setDislikeCount(currentDislikeCount != null ? currentDislikeCount + 1 : 1);
             } else {
-                // Create a new like/dislike
-                LikeDislike newLikeDislike = new LikeDislike();
-                newLikeDislike.setComment(comment);
-                updateLikeDislikeCounts(newLikeDislike, likeDislikeType);
-
-                likeDislikeRepository.save(newLikeDislike);
+                // Invalid likeDislikeType
+                return ResponseEntity.badRequest().build();
             }
 
-            // Update like/dislike count in the associated comment
-            updateCommentLikeDislikeCounts(comment, likeDislikeType);
+            commentRepository.save(comment);
 
-            return ResponseEntity.ok("Comment liked or disliked successfully!");
+            CommentResponse commentResponse = new CommentResponse(comment);
+
+            return ResponseEntity.ok(commentResponse);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
-
-    /*private void updateLikeDislikeCounts(LikeDislike likeDislike, String likeDislikeType) {
-        if (likeDislikeType.equalsIgnoreCase("LIKE")) {
-            likeDislike.setType(LikeDislikeType.LIKE);
-        } else if (likeDislikeType.equalsIgnoreCase("DISLIKE")) {
-            likeDislike.setType(LikeDislikeType.DISLIKE);
-        }
-    }*/
-
-    private void updateCommentLikeDislikeCounts(Comment comment, String likeDislikeType) {
-        long likeCount = comment.getLikesDislikes().stream().filter(like -> like.getType() == LikeDislikeType.LIKE).count();
-        long dislikeCount = comment.getLikesDislikes().stream().filter(like -> like.getType() == LikeDislikeType.DISLIKE).count();
-
-        comment.setLikeCount(likeCount);
-        comment.setDislikeCount(dislikeCount);
-    }
-
 
 }
 

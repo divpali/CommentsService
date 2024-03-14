@@ -33,12 +33,20 @@ public class CommentResponse {
                 .map(CommentResponse::new)
                 .collect(Collectors.toList());
 
-        this.likesCount = comment.getLikesDislikes().stream()
+        Long like = comment.getLikeCount();
+
+        this.likesCount = comment.getLikeCount() == null ? Long.valueOf(0) : like++;
+
+        Long disLike = comment.getDislikeCount();
+
+        this.dislikesCount = comment.getDislikeCount() == null ? Long.valueOf(0) : disLike++;
+
+        /*this.likesCount = comment.getLikesDislikes().stream()
                 .filter(likeDislike -> likeDislike.getType() == LikeDislikeType.LIKE)
                 .count();
 
         this.dislikesCount = comment.getLikesDislikes().stream()
                 .filter(likeDislike -> likeDislike.getType() == LikeDislikeType.DISLIKE)
-                .count();
+                .count();*/
     }
 }

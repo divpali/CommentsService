@@ -45,11 +45,11 @@ public class Comment {
     private List<LikeDislike> likesDislikes = new ArrayList<>();
 
     @Column(name = "like_count")
-    @Transient
+//    @Transient
     private Long likeCount;
 
     @Column(name = "dislike_count")
-    @Transient
+//    @Transient
     private Long dislikeCount;
 
 }
