@@ -28,7 +28,7 @@ public class Post {
     @JsonIgnoreProperties("user")
     private User user;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("post")
     private List<Comment> comments = new ArrayList<>();
 
@@ -43,6 +43,5 @@ public class Post {
     @Column(name = "dislike_count")
     @Transient
     private Long dislikeCount;
-
 
 }

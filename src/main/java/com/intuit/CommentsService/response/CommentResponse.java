@@ -14,8 +14,8 @@ public class CommentResponse {
     private Long commentId;
     private String commentContent;
     private Timestamp commentCreatedTime;
-    private Long userId;
-    private String username;
+    private Long commentUserId;
+    private String commentUserName;
     private List<CommentResponse> replies; // Updated to handle replies
     private Long likesCount;
     private Long dislikesCount;
@@ -26,8 +26,8 @@ public class CommentResponse {
         this.commentCreatedTime = comment.getCommentCreatedTime();
 
         User user = comment.getUser();
-        this.userId = user.getId();
-        this.username = user.getUsername();
+        this.commentUserId = user.getId();
+        this.commentUserName = user.getUsername();
 
         this.replies = comment.getReplies().stream()
                 .map(CommentResponse::new)

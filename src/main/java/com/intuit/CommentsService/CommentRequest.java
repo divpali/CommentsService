@@ -7,8 +7,8 @@ import lombok.Setter;
 @Setter
 public class CommentRequest {
 
-    private Long id;
+    private Long userId;
     private String userName;
-    private String content;
+    private String commentContent;
     private Long parentCommentId;
 }

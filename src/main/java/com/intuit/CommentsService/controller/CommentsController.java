@@ -12,6 +12,7 @@ import com.intuit.CommentsService.repository.PostRepository;
 import com.intuit.CommentsService.repository.UserRepository;
 import com.intuit.CommentsService.response.CommentResponse;
 import com.intuit.CommentsService.response.PostResponse;
+import com.intuit.CommentsService.response.UserResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +38,9 @@ public class CommentsController {
     LikeDislikeRepository likeDislikeRepository;
 
     @PostMapping("/user")
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
+    public UserResponse createUser(@RequestBody User user) {
+        User user1 = userRepository.save(user);
+        return new UserResponse(user1);
     }
 
     @PostMapping("/{userId}/posts")
@@ -61,7 +63,7 @@ public class CommentsController {
             @RequestBody CommentRequest commentRequest) {
 
         Optional<Post> postOptional = postRepository.findById(postId);
-        Optional<User> userOptional = userRepository.findById(commentRequest.getId());
+        Optional<User> userOptional = userRepository.findById(commentRequest.getUserId());
 
         if (postOptional.isPresent()) {
             Post post = postOptional.get();
@@ -76,7 +78,32 @@ public class CommentsController {
                 userRepository.save(user);
             }
 
-            Comment comment = new Comment();
+            // Check if the comment already exists
+            Comment existingComment = commentRepository.findByContentAndUserAndPost(commentRequest.getCommentContent(), user, post);
+
+            Comment comment;
+            if (existingComment != null) {
+                comment = existingComment;
+            } else {
+                comment = new Comment();
+                comment.setContent(commentRequest.getCommentContent());
+                comment.setCommentCreatedTime(new Timestamp(System.currentTimeMillis()));
+                comment.setUser(user);
+                comment.setPost(post);
+
+                post.getComments().add(comment);
+                user.getComments().add(comment);
+
+                commentRepository.save(comment);
+            }
+
+            // Save the post
+            postRepository.save(post);
+
+            PostResponse postResponse = new PostResponse(post);
+            return ResponseEntity.ok(postResponse);
+
+            /*Comment comment = new Comment();
             comment.setContent(commentRequest.getContent());
             comment.setCommentCreatedTime(new Timestamp(System.currentTimeMillis()));
             comment.setUser(user);
@@ -90,13 +117,14 @@ public class CommentsController {
             commentRepository.save(comment);
 
             PostResponse postResponse = new PostResponse(post);
-            return ResponseEntity.ok(postResponse);
+            return ResponseEntity.ok(postResponse);*/
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @PostMapping("/add-reply/{postId}")
+
+    /*@PostMapping("/add-reply/{postId}")
     public ResponseEntity<?> addReplyToComment(
             @PathVariable Long postId,
             @RequestBody CommentRequest commentRequest) {
@@ -108,8 +136,8 @@ public class CommentsController {
 
             User user;
 
-            if (commentRequest.getId() != null) {
-                Optional<User> userOptional = userRepository.findById(commentRequest.getId());
+            if (commentRequest.getUserId() != null) {
+                Optional<User> userOptional = userRepository.findById(commentRequest.getUserId());
 
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
@@ -138,6 +166,7 @@ public class CommentsController {
             reply.setUser(user);
             reply.setPost(post);
             reply.setParentComment(parentComment);
+            commentRepository.save(reply);
 
             if (parentComment != null) {
                 parentComment.getReplies().add(reply);
@@ -146,8 +175,7 @@ public class CommentsController {
             }
 
             postRepository.save(post);
-            userRepository.save(user);
-            commentRepository.save(reply);
+//            userRepository.save(user);
 
             // Create and return the updated PostResponse object
             PostResponse postResponse = new PostResponse(post);
@@ -155,9 +183,63 @@ public class CommentsController {
         } else {
             return ResponseEntity.notFound().build();
         }
+
+
+    }*/
+
+    @PostMapping("/add-reply/{postId}")
+    public ResponseEntity<?> addReplyToComment(
+            @PathVariable Long postId,
+            @RequestBody CommentRequest commentRequest) {
+
+        Optional<Post> postOptional = postRepository.findById(postId);
+
+        if (postOptional.isPresent()) {
+            Post post = postOptional.get();
+
+            // find parent comment
+            Optional<Comment> parentCommentOptional = commentRepository.findById(commentRequest.getParentCommentId());
+
+            if (!parentCommentOptional.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Comment parentComment = parentCommentOptional.get();
+
+            //check if the user exists
+            User user = null;
+            Optional<User> userOptional = userRepository.findById(commentRequest.getUserId());
+            if (!userOptional.isPresent()) {
+                user = new User();
+                user.setId(commentRequest.getUserId());
+                user.setUsername(commentRequest.getUserName());
+                userRepository.save(user);
+            }
+
+            //create the reply
+            Comment reply = new Comment();
+            reply.setContent(commentRequest.getCommentContent());
+            reply.setCommentCreatedTime(new Timestamp(System.currentTimeMillis()));
+            reply.setUser(user);
+//            reply.setPost(post);
+            reply.setParentComment(parentComment);
+
+            commentRepository.save(reply);
+
+            //add reply to parent comment & save the updated parent comment
+            parentComment.getReplies().add(reply);
+            commentRepository.saveAndFlush(parentComment);
+
+            // Create and return the updated PostResponse object
+            PostResponse postResponse = new PostResponse(post);
+            return ResponseEntity.ok(postResponse);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
-    //here we dont persist user info on user liking or disliking a post
+        //here we dont persist user info on user liking or disliking a post
     //we job keep count of like or dislike of post or comment
 
     @PostMapping("/like-post/{postId}")

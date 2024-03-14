@@ -16,8 +16,8 @@ public class PostResponse {
     private String postContent;
     private Timestamp postCreatedTime;
 
-    private Long userId;
-    private String username;
+    private Long postUserId;
+    private String postUsername;
 
     private List<CommentResponse> comments;
 
@@ -31,8 +31,8 @@ public class PostResponse {
         this.postCreatedTime = post.getPostCreatedTime();
 
         User user = post.getUser();
-        this.userId = user.getId();
-        this.username = user.getUsername();
+        this.postUserId = user.getId();
+        this.postUsername = user.getUsername();
 
         this.comments = post.getComments().stream()
                 .map(CommentResponse::new)
