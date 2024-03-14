@@ -32,5 +32,17 @@ public class Post {
     @JsonIgnoreProperties("post")
     private List<Comment> comments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post")
+    @JsonIgnoreProperties("post")
+    private List<LikeDislike> likesDislikes = new ArrayList<>();
+
+    @Column(name = "like_count")
+    @Transient
+    private Long likeCount;
+
+    @Column(name = "dislike_count")
+    @Transient
+    private Long dislikeCount;
+
 
 }

@@ -40,4 +40,16 @@ public class Comment {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
 
+    @OneToMany(mappedBy = "comment")
+    @JsonIgnoreProperties("comment")
+    private List<LikeDislike> likesDislikes = new ArrayList<>();
+
+    @Column(name = "like_count")
+    @Transient
+    private Long likeCount;
+
+    @Column(name = "dislike_count")
+    @Transient
+    private Long dislikeCount;
+
 }

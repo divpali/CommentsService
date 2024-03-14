@@ -1,5 +1,6 @@
 package com.intuit.CommentsService.response;
 
+import com.intuit.CommentsService.LikeDislikeType;
 import com.intuit.CommentsService.entities.Post;
 import com.intuit.CommentsService.entities.User;
 import lombok.Data;
@@ -20,6 +21,10 @@ public class PostResponse {
 
     private List<CommentResponse> comments;
 
+    private Long likesCount;
+    private Long dislikesCount;
+
+
     public PostResponse(Post post) {
         this.postId = post.getId();
         this.postContent = post.getContent();
@@ -32,5 +37,21 @@ public class PostResponse {
         this.comments = post.getComments().stream()
                 .map(CommentResponse::new)
                 .collect(Collectors.toList());
+
+        Long like = post.getLikeCount();
+
+        this.likesCount = post.getLikeCount() == null ? Long.valueOf(0) : like++;
+
+        Long disLike = post.getDislikeCount();
+
+        this.dislikesCount = post.getDislikeCount() == null ? Long.valueOf(0) : disLike++;
+
+        /*this.likesCount = post.getLikesDislikes().stream()
+                .filter(likeDislike -> likeDislike.getType() == LikeDislikeType.LIKE)
+                .count();
+
+        this.dislikesCount = post.getLikesDislikes().stream()
+                .filter(likeDislike -> likeDislike.getType() == LikeDislikeType.DISLIKE)
+                .count();*/
     }
 }
