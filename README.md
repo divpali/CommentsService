@@ -2,7 +2,7 @@
 
 ## API Design:
 
-![Screenshot 2024-03-24 at 7.52.11 PM.png](..%2F..%2F..%2FDesktop%2FScreenshot%202024-03-24%20at%207.52.11%20PM.png)
+![Screenshot 2024-03-24 at 7.52.11 PM.png](https://github.com/divpali/CommentsService/blob/main/Screenshot%202024-03-24%20at%207.52.11%20PM.png)
 
 ### 1. Create User
 
