@@ -2,6 +2,8 @@
 
 ## API Design:
 
+![Screenshot 2024-03-24 at 7.52.11 PM.png](..%2F..%2F..%2FDesktop%2FScreenshot%202024-03-24%20at%207.52.11%20PM.png)
+
 ### 1. Create User
 
 POST: http://localhost:8080/comments-service/user
