@@ -43,7 +43,13 @@ public class CommentsController {
         return new UserResponse(user1);
     }
 
-    @PostMapping("/{userId}/posts")
+    @GetMapping("/users")
+    public List<User> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users;
+    }
+
+    @PostMapping("/posts/{userId}")
     public PostResponse createPost(@PathVariable Long userId, @RequestBody Post post) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -302,7 +308,7 @@ public class CommentsController {
                 Long currentLikeCount = post.getLikeCount();
                 post.setLikeCount(currentLikeCount != null ? currentLikeCount + 1 : 1);
             } else if ("dislike".equalsIgnoreCase(likeDislikeType)) {
-                Long currentDislikeCount = post.getLikeCount();
+                Long currentDislikeCount = post.getDislikeCount();
                 post.setDislikeCount(currentDislikeCount != null ? currentDislikeCount + 1 : 1);
             } else {
                 // Invalid likeDislikeType
@@ -335,7 +341,7 @@ public class CommentsController {
                 Long currentLikeCount = comment.getLikeCount();
                 comment.setLikeCount(currentLikeCount != null ? currentLikeCount + 1 : 1);
             } else if ("dislike".equalsIgnoreCase(likeDislikeType)) {
-                Long currentDislikeCount = comment.getLikeCount();
+                Long currentDislikeCount = comment.getDislikeCount();
                 comment.setDislikeCount(currentDislikeCount != null ? currentDislikeCount + 1 : 1);
             } else {
                 // Invalid likeDislikeType
